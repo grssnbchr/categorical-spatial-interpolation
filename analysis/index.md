@@ -30,7 +30,7 @@ which was published last December. The georeferenced points underlying
 the interpolation are actually the result of a crowdsourcing project.
 Each point is the location of a person who selected a certain
 pronunciation in an online survey. [You can find more details
-here.](https://timogrossenbacher.ch/2017/03/heres-how-670000-people-speak-german/).
+here](https://timogrossenbacher.ch/2017/03/heres-how-670000-people-speak-german/).
 
 <img src="https://timogrossenbacher.ch/wp-content/uploads/2018/03/gruezi-moin-servus.png" />
 
@@ -39,13 +39,13 @@ dialects of "breakfast":
 
 <img src="https://timogrossenbacher.ch/wp-content/uploads/2018/03/gruezi-moin-servus-map.jpeg" />
 
-I actually tried to automate almost anything for that large-scale map
+I actually tried to automate everything for that large-scale map
 production, but one thing I couldn't automate: The placement of the
 (curved) labels for the dialects (I didn't use a legend in the final
-map). I did that in Adobe Illustrator. I can't imagine a way how this
-would automatically work for all possible edge cases (for example when
-the label has to be put outside of the map because the area is too
-small).
+maps as you can see above). I did that in Adobe Illustrator. I can't
+imagine a way how this would automatically work for all possible edge
+cases (for example when the label has to be put outside of the map
+because the area is too small).
 
 Outline {#outline}
 -------
@@ -94,11 +94,11 @@ Preparations {#preparations}
 
 ### Clear workspace and install necessary packages {#clear-workspace-and-install-necessary-packages}
 
-What follows fhere to the section **Load Data** is just my usual
+What follows from here until the section **Load Data** is just my usual
 routine: Detach all packages, remove all variables in the global
 environment, etc, and then load the packages from the MRAN server (a
 snapshot from September 1st, 2017). With this, I ensure [reproducibility
-and cross-OS
+and cross-device
 compatibility](https://timogrossenbacher.ch/2017/07/a-truly-reproducible-r-workflow/).
 I use my [freely available
 template](https://github.com/grssnbchr/rddj-template) for this, with
@@ -657,7 +657,7 @@ time.taken <- end.time - start.time
 time.taken
 ```
 
-    ## Time difference of 4.344954 mins
+    ## Time difference of 4.493436 mins
 
 ``` r
 # convert resulting df back to sf object, but do not remove raw geometry cols
@@ -831,14 +831,16 @@ ggplot(data = dialects_raster) +
   # enlarge canvas
   coord_equal(xlim = c(180000, 1020000)) +
   labs(title = "German dialects of the verb \"to chatter\"",
-       subtitle = "Based on a sample of >100k speakers across Germany, 
-       KNN with k=500",
-       caption = "Map CC-BY-SA; 
-       Author: Timo Grossenbacher (@grssnbchr), 
-       \nGeometries: Natural Earth; Data: Leemann et al., 2015;")
+       subtitle = "Based on a sample of >100k speakers across Germany, KNN with K=1000",
+       caption = "Map CC-BY-SA; Author: Timo Grossenbacher (@grssnbchr), \nGeometries: Natural Earth; Data: Leemann et al., 2015;")
 ```
 
 <img src="https://timogrossenbacher.ch/wp-content/uploads/2018/03/csi-visualize-interpolation-1.png" width="100%" />
+
+One last thing: You might have noticed that only 7 different dialects
+remain. Depending on the number of K, some dialects can be "overruled"
+by others. So if I'd set K to a very high number like 20'000, probably
+the globally most dominant dialect "quatschen" would remain.
 
 Another try with higher "k" {#another-try-with-higher-k}
 ---------------------------
@@ -849,6 +851,9 @@ as the computation with `k = 1000`, because computation time is a linear
 function of the number of neighbors that need to be taken into account
 for each grid cell. In other words: increasing `k` is a rather cheap
 operation in comparison to increasing the raster resolution.
+
+Notice how smaller regions disappear and how the boundaries between
+dialect regions are smoother.
 
 ``` r
 k <- 2000 # "k" for k-nearest-neighbour-interpolation
@@ -871,7 +876,7 @@ time.taken <- end.time - start.time
 time.taken
 ```
 
-    ## Time difference of 7.052619 mins
+    ## Time difference of 7.427421 mins
 
 ``` r
 # convert resulting df back to sf object, but do not remove raw geometry cols
@@ -913,11 +918,8 @@ ggplot(data = dialects_raster) +
   # enlarge canvas
   coord_equal(xlim = c(180000, 1020000)) +
   labs(title = "German dialects of the verb \"to chatter\"",
-       subtitle = "Based on a sample of >100k speakers across 
-       Germany, KNN with k=2000",
-       caption = "Map CC-BY-SA; 
-       Author: Timo Grossenbacher (@grssnbchr),
-       \nGeometries: Natural Earth; Data: Leemann et al., 2015;")
+       subtitle = "Based on a sample of >100k speakers across Germany, KNN with K=2000",
+       caption = "Map CC-BY-SA; Author: Timo Grossenbacher (@grssnbchr), \nGeometries: Natural Earth; Data: Leemann et al., 2015;")
 ```
 
 <img src="https://timogrossenbacher.ch/wp-content/uploads/2018/03/csi-higher-k-1.png" width="100%" />
@@ -927,7 +929,7 @@ always, [follow me on Twitter](https://twitter.com/grssnbchr) if you
 still don't.
 
 Now to some shameless self-promotion (that's the whole point of writing
-a blog, anyway): I recently launched a DataCamp course called
+a blog, anyway): I recently launched a **DataCamp course** called
 [Communicating with Data in the
 Tidyverse](https://www.datacamp.com/courses/communicating-with-data-in-the-tidyverse).
 It covers some of the basics which you need to master in order to do
@@ -935,3 +937,5 @@ fancy stuff like I did here. It especially shows you some tricks on how
 to customize `ggplot2` to produce unconventional plots like the ones
 shown here. `ggplot2` is so powerful, you won't believe what you can do
 with it until you see it!
+
+<img src="https://assets.datacamp.com/production/course_5807/shields/original/shield_image_course_5807_20180314-12-1przogj?1521031618" />
