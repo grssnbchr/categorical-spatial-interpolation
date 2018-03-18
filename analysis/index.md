@@ -6,7 +6,7 @@
     -   [Load Data](#load-data)
     -   [Preprocess Data](#preprocess-data)
     -   [Visualize](#visualize)
-    -   [Another try with higher "k"](#another-try-with-higher-k)
+    -   [Another try with higher "K"](#another-try-with-higher-k)
 
 Categorical Spatial Interpolation with R {#categorical-spatial-interpolation-with-r}
 ========================================
@@ -16,9 +16,9 @@ Categorical Spatial Interpolation with R {#categorical-spatial-interpolation-wit
 In this blog post, I want to show you how you can quite easily produce
 the above categorical spatial interpolation from a set of georeferenced
 points as shown below – and this only using the `tidyverse`, `sf` and
-the package `kknn`. Because the computation of such raster images can be
-rather intensive and memory-heavy, I used parallel processing with 4 CPU
-cores. So, ideally, you also learn something about that.
+the package `kknn`. Because the computation of such interpolated images
+can be rather intensive and memory-heavy, I used parallel processing
+with 4 CPU cores. So, ideally, you also learn something about that.
 
 <img src="https://timogrossenbacher.ch/wp-content/uploads/2018/03/csi-visualize-some-points-1.png" width="100%" />
 
@@ -58,13 +58,13 @@ This tutorial is structured as follows:
 -   Preprocess the data (simplify geometries, convert CSV point data
     into an `sf` object, reproject the geodata into the ETRS CRS, clip
     the point data to Germany, so data outside of Germany is discarded).
--   Then, a regular grid (a raster without "data") is created. Each grid
-    point in this raster will later be interpolated from the point data.
+-   Then, a regular grid without "data" is created. Each cell in this
+    grid will later be interpolated from the point data.
 -   Run the spatial interpolation with the `kknn` package. Since this is
-    quite computationally and memory intensive, the resulting raster is
-    split up into 20 batches, and each batch is computed by a single CPU
-    core in parallel.
--   Visualize the resulting raster with `ggplot2`.
+    quite computationally and memory intensive, the grid is split up
+    into 20 batches, and each batch is computed by a single CPU core in
+    parallel.
+-   Visualize the resulting grid with `ggplot2`.
 
 Reproducibility {#reproducibility}
 ---------------
@@ -157,7 +157,7 @@ if (!dir.exists("~/.checkpoint")) {
 checkpoint(snapshotDate = package_date,
            project = path_to_wd,
            verbose = T,
-           scanForPackages = F,
+           scanForPackages = T,
            use.knitr = F,
            R.version = r_version)
 rm(package_date)
@@ -334,18 +334,6 @@ cities <- read_csv("input/simplemaps-worldcities-basic.csv") %>%
     ##   province = col_character()
     ## )
 
-``` r
-cities
-```
-
-| city      | city\_ascii |       lat|        lng|        pop| country | iso2 | iso3 | province            |
-|:----------|:------------|---------:|----------:|----------:|:--------|:-----|:-----|:--------------------|
-| Cologne   | Cologne     |  50.93000|   6.950004|   983697.5| Germany | DE   | DEU  | Nordrhein-Westfalen |
-| Frankfurt | Frankfurt   |  50.09998|   8.675015|  1787332.0| Germany | DE   | DEU  | Hessen              |
-| Hamburg   | Hamburg     |  53.55002|   9.999999|  1748058.5| Germany | DE   | DEU  | Hamburg             |
-| Munich    | Munich      |  48.12994|  11.574993|  1267695.5| Germany | DE   | DEU  | Bayern              |
-| Berlin    | Berlin      |  52.52182|  13.401549|  3250007.0| Germany | DE   | DEU  | Berlin              |
-
 Preprocess Data {#preprocess-data}
 ---------------
 
@@ -436,9 +424,10 @@ point_data <- point_data[germany_buffered, ]
 
 ### Make Regular Grid {#make-regular-grid}
 
-Now it get's complicated. Well, so so. The goal of this whole exercise
-is *interpolating a discrete geometric point data set to a continuous
-surface*, represented by a regular grid ("raster").
+Now it starts to get interesting. The goal of this whole exercise is
+*interpolating a discrete geometric point data set to a continuous
+surface*, represented by a regular grid (a "raster" in geoscience
+terms).
 
 For that, I create a regular grid with `st_make_grid` from the `sf`
 package. This function takes an `sf` object like `germany_buffered` and
@@ -452,19 +441,19 @@ computing time. A lower number takes faster to compute, but yields a
 less continuous, more pixelated surface. Try out different values here
 and look at the end result if you don't know what I mean :-)
 
-From that number, the height of the raster in pixels is computed
-(because that depends on the aspect ratio of Germany).
+From that number, the height of the grid in pixels is computed (because
+that depends on the aspect ratio of Germany).
 
 ``` r
-# specify raster width in pixels
+# specify grid width in pixels
 width_in_pixels <- 300
-# dx is the width of a raster cell in meters
+# dx is the width of a grid cell in meters
 dx <- ceiling( (st_bbox(germany_buffered)["xmax"] - 
                  st_bbox(germany_buffered)["xmin"]) / width_in_pixels)
-# dy is the height of a raster cell in meters
-# because we use quadratic raster cells, dx == dy
+# dy is the height of a grid cell in meters
+# because we use quadratic grid cells, dx == dy
 dy <- dx
-# calculate the height in pixels of the resulting raster grid
+# calculate the height in pixels of the resulting grid
 height_in_pixels <- floor( (st_bbox(germany_buffered)["ymax"] - 
                              st_bbox(germany_buffered)["ymin"]) / dy)
 
@@ -480,8 +469,15 @@ plot(grid)
 ```
 
 <img src="https://timogrossenbacher.ch/wp-content/uploads/2018/03/csi-make_grid-1.png" width="100%" />
+
 Well, that grid doesn't look too spectacular. If you zoomed in though,
-you would see the single raster cells. Promise!
+you would see the single grid cells, or rather: points. Why that? I
+didn't actually create a "raster" as one would do with the `raster`
+package. `sf` returns an `sfc` object with center points of the grid
+cells. A "traditional" raster is not needed because
+`ggplot2::geom_raster` just needs a data frame with grid cell positions
+and draws a continuous surface from it, not a collection of discrete
+points like `geom_point`. But more about that later.
 
 ### Prepare Training Set {#prepare-training-set}
 
@@ -499,9 +495,8 @@ I also use some `dplyr` magic to only retain the 8 most prominent
 dialects in the 150k point data set. Why? Because plotting more than 8
 different colors in the final map is a pain for the eyes – the different
 areas couldn't be distinguished anymore. But bear in mind: The more we
-summarize the data set, the less prominent dialects we keep in the data
-set, the more local specialities (endemic dialects that only appear in
-one city, for instance) we lose.
+summarize the data set, the more local specialities we lose (endemic
+dialects that only appear in one city, for instance).
 
 ``` r
 dialects_train <- data.frame(dialect = point_data$pronunciation_id, 
@@ -541,9 +536,9 @@ below, and also tried out other values (there's another example with
 It's hard to say which of these details are just noise or actual local
 language varieties. One could certainly account for this by doing
 something like cross-fold-validation, but since I first and foremost
-wanted to produce maps for a popular science book, I neglected this
-part. Furthermore, my co-authors, who are all linguists, doublechecked
-each map for artifacts and plausibility.
+wanted to produce very coarse maps for a popular culture book, I kind of
+neglected this part. Furthermore, my co-authors, who are all linguists,
+doublechecked each map for its linguistic plausibility.
 
 What's special about `kknn` is that it can interpolate *categorical*
 variables like the factor at hand here. Usually with spatial
@@ -570,11 +565,11 @@ batches don't even need to be rectangular, which I only started to
 realize when I wrote this blog post (before that I used the package
 `SpaDES::splitRaster` to split up a traditional `raster`-grid into
 regular tiles, but for this blog post I wanted to keep the dependencies
-on a minimum and only use the lattest and hottest stuff like `sf`).
+on a minimum).
 
 On a 4-CPU-core-laptop like mine, the following takes about 5 minutes.
-Calculating ~80 maps with a raster width of 1000 (instead of 300), which
-I had to do for my book, took quite some time, as you can imagine. I
+Calculating ~80 maps with a grid width of 1000 (instead of 300), which I
+had to do for my book, took quite some time, as you can imagine. I
 actually experimented with "outsourcing" this calcualation to a remote
 cluster (for instance provided by Microsoft Azure), but then that was
 quite costly and I decided that for my one-time-use, it would be easier
@@ -657,7 +652,7 @@ time.taken <- end.time - start.time
 time.taken
 ```
 
-    ## Time difference of 4.493436 mins
+    ## Time difference of 3.773613 mins
 
 ``` r
 # convert resulting df back to sf object, but do not remove raw geometry cols
@@ -752,7 +747,7 @@ cities_df$lat <- st_coordinates(cities)[, 2]
 First I only visualize a N=1000 sample of all the points, so you get an
 idea whether the interpolation makes sense at all.
 
-I decided to use a `colorbrewer` categorial color scale here, but of
+I decided to use a `colorbrewer` categorical color scale here, but of
 course one could also use the default `ggplot2` scale.
 
 ``` r
@@ -790,10 +785,9 @@ ggplot(data = dialects_sample) +
 
 Now comes the fun part. Visualizing the interpolated grid is very simple
 with `geom_raster`. Even though `dialects_raster` is still an `sf`
-object, `geom_raster` works with it as if it was an ordinary data frame.
-Think of something like `geom_point` but for many many points that are
-connected to each other. Indeed, `geom_raster` is also way more
-efficient for plotting grids than `geom_point`.
+object, `geom_raster` only works with the attached data frame (= no need
+to transform it like `cities`). That's why I didn't remove the raw
+geometry columns before.
 
 `geom_raster` uses the `fill` aesthetic for the dominant dialect at the
 current raster cell and `alpha` for its probability (= dominance). This
@@ -840,9 +834,9 @@ ggplot(data = dialects_raster) +
 One last thing: You might have noticed that only 7 different dialects
 remain. Depending on the number of K, some dialects can be "overruled"
 by others. So if I'd set K to a very high number like 20'000, probably
-the globally most dominant dialect "quatschen" would remain.
+only the globally most dominant dialect "quatschen" would remain.
 
-Another try with higher "k" {#another-try-with-higher-k}
+Another try with higher "K" {#another-try-with-higher-k}
 ---------------------------
 
 Just to show you the effects of a higher K, here's the same thing as
@@ -850,7 +844,7 @@ above but with `k = 2000`. This should take approximately twice as long
 as the computation with `k = 1000`, because computation time is a linear
 function of the number of neighbors that need to be taken into account
 for each grid cell. In other words: increasing `k` is a rather cheap
-operation in comparison to increasing the raster resolution.
+operation in comparison to increasing the grid resolution.
 
 Notice how smaller regions disappear and how the boundaries between
 dialect regions are smoother.
@@ -876,7 +870,7 @@ time.taken <- end.time - start.time
 time.taken
 ```
 
-    ## Time difference of 7.427421 mins
+    ## Time difference of 6.049062 mins
 
 ``` r
 # convert resulting df back to sf object, but do not remove raw geometry cols
