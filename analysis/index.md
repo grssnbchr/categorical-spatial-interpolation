@@ -104,6 +104,8 @@ I use my [freely available
 template](https://github.com/grssnbchr/rddj-template) for this, with
 some adaptions detailed under **Reproducibility**.
 
+    ## [1] "package package:rmarkdown detached"
+
 ### Define packages {#define-packages}
 
 For this project, I just used the usual suspects, i.e. `tidyverse`
@@ -140,14 +142,32 @@ if (!require(checkpoint)) {
     install.packages("devtools", repos = "http://cran.us.r-project.org")
     require(devtools)
   }
-  devtools::install_github("checkpoint",
-                           username = "RevolutionAnalytics",
+  devtools::install_github("RevolutionAnalytics/checkpoint",
                            ref = "v0.3.2", # could be adapted later,
                            # as of now (beginning of July 2017
                            # this is the current release on CRAN)
                            repos = "http://cran.us.r-project.org")
   require(checkpoint)
 }
+```
+
+    ##   
+       checking for file ‘/tmp/RtmpN3xaX1/remotesfb375c21760/RevolutionAnalytics-checkpoint-024b91d/DESCRIPTION’ ...
+      
+    ✔  checking for file ‘/tmp/RtmpN3xaX1/remotesfb375c21760/RevolutionAnalytics-checkpoint-024b91d/DESCRIPTION’
+    ## ─  preparing ‘checkpoint’:
+    ## ✔  checking DESCRIPTION meta-information
+    ## 
+      
+    ─  checking for LF line-endings in source and make files and shell scripts
+    ## ─  checking for empty or unneeded directories
+    ## ─  building ‘checkpoint_0.4.0.tar.gz’
+    ## 
+      
+       
+    ## 
+
+``` r
 # nolint start
 if (!dir.exists("~/.checkpoint")) {
   dir.create("~/.checkpoint")
@@ -159,7 +179,7 @@ checkpoint(snapshotDate = package_date,
            verbose = T,
            scanForPackages = T,
            use.knitr = F,
-           R.version = r_version)
+           R.version = R_version)
 rm(package_date)
 ```
 
@@ -171,13 +191,13 @@ unlink("manifest.R")
 sessionInfo()
 ```
 
-    ## R version 3.4.3 (2017-11-30)
+    ## R version 3.4.4 (2018-03-15)
     ## Platform: x86_64-pc-linux-gnu (64-bit)
-    ## Running under: Ubuntu 16.04.4 LTS
+    ## Running under: Ubuntu 18.04.1 LTS
     ## 
     ## Matrix products: default
-    ## BLAS: /usr/lib/libblas/libblas.so.3.6.0
-    ## LAPACK: /usr/lib/lapack/liblapack.so.3.6.0
+    ## BLAS: /opt/R/R-3.4.4/lib64/R/lib/libRblas.so
+    ## LAPACK: /opt/R/R-3.4.4/lib64/R/lib/libRlapack.so
     ## 
     ## locale:
     ##  [1] LC_CTYPE=en_US.UTF-8       LC_NUMERIC=C              
@@ -195,25 +215,35 @@ sessionInfo()
     ##  [1] kknn_1.3.1          doParallel_1.0.10   iterators_1.0.8    
     ##  [4] foreach_1.4.3       rnaturalearth_0.1.0 sf_0.5-4           
     ##  [7] lintr_1.0.1         forcats_0.2.0       magrittr_1.5       
-    ## [10] dplyr_0.7.4         purrr_0.2.3         readr_1.1.1        
-    ## [13] tidyr_0.7.0         tibble_1.4.2        ggplot2_2.2.1      
-    ## [16] tidyverse_1.1.1     checkpoint_0.4.0   
+    ## [10] dplyr_0.7.2         purrr_0.2.3         readr_1.1.1        
+    ## [13] tidyr_0.7.0         tibble_1.3.4        ggplot2_2.2.1      
+    ## [16] tidyverse_1.1.1     checkpoint_0.4.0    usethis_1.5.0      
+    ## [19] devtools_2.0.2     
     ## 
     ## loaded via a namespace (and not attached):
-    ##  [1] reshape2_1.4.2   haven_1.1.0      lattice_0.20-35  colorspace_1.3-2
-    ##  [5] htmltools_0.3.6  yaml_2.1.14      rlang_0.2.0      pillar_1.2.1    
-    ##  [9] foreign_0.8-69   glue_1.2.0       DBI_0.7          sp_1.2-5        
-    ## [13] modelr_0.1.1     readxl_1.0.0     bindrcpp_0.2     bindr_0.1       
-    ## [17] plyr_1.8.4       stringr_1.2.0    munsell_0.4.3    gtable_0.2.0    
-    ## [21] cellranger_1.1.0 rvest_0.3.2      codetools_0.2-15 psych_1.7.5     
-    ## [25] evaluate_0.10    knitr_1.16       rex_1.1.1        broom_0.4.2     
-    ## [29] Rcpp_0.12.14     udunits2_0.13    scales_0.5.0     backports_1.1.0 
-    ## [33] jsonlite_1.5     mnormt_1.5-5     hms_0.3          digest_0.6.12   
-    ## [37] stringi_1.1.5    grid_3.4.3       rprojroot_1.2    tools_3.4.3     
-    ## [41] lazyeval_0.2.0   pkgconfig_2.0.1  Matrix_1.2-11    xml2_1.1.1      
-    ## [45] lubridate_1.7.3  assertthat_0.2.0 rmarkdown_1.8    httr_1.3.1      
-    ## [49] R6_2.2.2         igraph_1.1.2     units_0.4-6      nlme_3.1-131.1  
-    ## [53] compiler_3.4.3
+    ##  [1] httr_1.3.1        pkgload_1.0.2     jsonlite_1.5     
+    ##  [4] modelr_0.1.1      assertthat_0.2.0  sp_1.2-5         
+    ##  [7] cellranger_1.1.0  yaml_2.1.14       remotes_2.0.4    
+    ## [10] sessioninfo_1.1.1 backports_1.1.0   lattice_0.20-35  
+    ## [13] glue_1.3.1        digest_0.6.12     rvest_0.3.2      
+    ## [16] colorspace_1.3-2  Matrix_1.2-12     htmltools_0.3.6  
+    ## [19] plyr_1.8.4        psych_1.7.5       pkgconfig_2.0.1  
+    ## [22] broom_0.4.2       haven_1.1.0       scales_0.5.0     
+    ## [25] processx_3.3.0    withr_2.1.2       lazyeval_0.2.0   
+    ## [28] cli_1.1.0         mnormt_1.5-5      crayon_1.3.4     
+    ## [31] readxl_1.0.0      memoise_1.1.0     evaluate_0.10.1  
+    ## [34] ps_1.3.0          fs_1.2.7          nlme_3.1-131.1   
+    ## [37] xml2_1.1.1        foreign_0.8-69    pkgbuild_1.0.3   
+    ## [40] tools_3.4.4       prettyunits_1.0.2 hms_0.3          
+    ## [43] stringr_1.2.0     munsell_0.4.3     bindrcpp_0.2     
+    ## [46] callr_3.2.0       rex_1.1.1         compiler_3.4.4   
+    ## [49] rlang_0.1.2       units_0.4-6       grid_3.4.4       
+    ## [52] igraph_1.1.2      testthat_1.0.2    gtable_0.2.0     
+    ## [55] codetools_0.2-15  DBI_0.7           curl_2.8.1       
+    ## [58] reshape2_1.4.2    R6_2.2.2          lubridate_1.6.0  
+    ## [61] knitr_1.17        udunits2_0.13     bindr_0.1        
+    ## [64] rprojroot_1.2     desc_1.2.0        stringi_1.1.5    
+    ## [67] Rcpp_0.12.12
 
 Load Data {#load-data}
 ---------
@@ -652,7 +682,7 @@ time.taken <- end.time - start.time
 time.taken
 ```
 
-    ## Time difference of 3.773613 mins
+    ## Time difference of 3.717294 mins
 
 ``` r
 # convert resulting df back to sf object, but do not remove raw geometry cols
@@ -870,7 +900,7 @@ time.taken <- end.time - start.time
 time.taken
 ```
 
-    ## Time difference of 6.049062 mins
+    ## Time difference of 6.251122 mins
 
 ``` r
 # convert resulting df back to sf object, but do not remove raw geometry cols
@@ -921,15 +951,3 @@ ggplot(data = dialects_raster) +
 That's it. If you have questions, write a comment or an email, and as
 always, [follow me on Twitter](https://twitter.com/grssnbchr) if you
 still don't.
-
-Now to some shameless self-promotion (that's the whole point of writing
-a blog, anyway): I recently launched a **DataCamp course** called
-[Communicating with Data in the
-Tidyverse](https://www.datacamp.com/courses/communicating-with-data-in-the-tidyverse).
-It covers some of the basics which you need to master in order to do
-fancy stuff like I did here. It especially shows you some tricks on how
-to customize `ggplot2` to produce unconventional plots like the ones
-shown here. `ggplot2` is so powerful, you won't believe what you can do
-with it until you see it!
-
-<img src="https://assets.datacamp.com/production/course_5807/shields/original/shield_image_course_5807_20180314-12-1przogj?1521031618" />

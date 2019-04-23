@@ -46,7 +46,11 @@ user_name <- "grssnbchr" # your Git username (only needed if
 project_name <- "categorical-spatial-interpolation" # adapt!
 package_date <- "2017-09-01" # date of the CRAN snapshot that
 # the checkpoint package uses
-r_version <- "3.4.3"
+R_version <- "3.4.4"
+options(Ncpus = 4) # use 4 cores for parallelized installation of packages
+if (R_version != paste0(version$major, ".", version$minor)){
+  stop("ERROR: specified R version does not match currently used.")
+}
 ```
 
 ## Reproducibility
@@ -117,6 +121,14 @@ if ( is.null(path_to_wd) | !dir.exists(path_to_wd)) {
 
 # suppress scientific notation
 options(scipen = 999) 
+
+# unload global rstudioapi and knitr again to avoid conflicts with checkpoint
+# this is only necessary if executed within RStudio
+# outside of RStudio, namely in the knit.sh script, this causes RMarkdown
+# rendering to fail, thus should not be executed there
+if (Sys.getenv("RSTUDIO") == "1"){
+  detach_all_packages()
+}
 ```
 
 
@@ -153,8 +165,7 @@ if (!require(checkpoint)) {
     install.packages("devtools", repos = "http://cran.us.r-project.org")
     require(devtools)
   }
-  devtools::install_github("checkpoint",
-                           username = "RevolutionAnalytics",
+  devtools::install_github("RevolutionAnalytics/checkpoint",
                            ref = "v0.3.2", # could be adapted later,
                            # as of now (beginning of July 2017
                            # this is the current release on CRAN)
@@ -172,7 +183,7 @@ checkpoint(snapshotDate = package_date,
            verbose = T,
            scanForPackages = T,
            use.knitr = F,
-           R.version = r_version)
+           R.version = R_version)
 rm(package_date)
 ```
 
@@ -695,7 +706,3 @@ ggplot(data = dialects_raster) +
 ```
 
 That's it. If you have questions, write a comment or an email, and as always, [follow me on Twitter](https://twitter.com/grssnbchr) if you still don't. 
-
-Now to some shameless self-promotion (that's the whole point of writing a blog, anyway): I recently launched a **DataCamp course** called [Communicating with Data in the Tidyverse](https://www.datacamp.com/courses/communicating-with-data-in-the-tidyverse). It covers some of the basics which you need to master in order to do fancy stuff like I did here. It especially shows you some tricks on how to customize `ggplot2` to produce unconventional plots like the ones shown here. `ggplot2` is so powerful, you won't believe what you can do with it until you see it! 
-
-<img src="https://assets.datacamp.com/production/course_5807/shields/original/shield_image_course_5807_20180314-12-1przogj?1521031618" />

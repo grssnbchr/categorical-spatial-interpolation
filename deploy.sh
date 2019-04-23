@@ -1,7 +1,6 @@
 #!/bin/bash
 # knit
-# add >>>export PATH="$PATH:/usr/lib/rstudio/bin/pandoc"<<< to your PATH in order for the following to work
-Rscript -e 'library(rmarkdown); rmarkdown::render("analysis/main.Rmd", "html_document")' --vanilla || { echo "ERROR: knitting failed. Please try to knit main.Rmd in RStudio in order to debug."; exit 1; }
+source knit.sh
 # make temporary copy of preprocessing folder with all data we need in build
 cp -r analysis tmp
 mv deploy.sh tmp/
@@ -29,6 +28,9 @@ cp -r tmp/output rscript/
 # copy over other necessary input files from master branch
 cp -r tmp/input rscript/
 cp -r tmp/scripts rscript/
+# remove ignore folder from folder that gets zipped
+rm -rf rscript/output/ignore
+rm -rf rscript/input/ignore
 # zip the rscript folder
 zip -r rscript.zip rscript
 # remove the rscript folder
