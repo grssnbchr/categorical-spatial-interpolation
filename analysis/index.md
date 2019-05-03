@@ -6,7 +6,7 @@
     -   [Load Data](#load-data)
     -   [Preprocess Data](#preprocess-data)
     -   [Visualize](#visualize)
-    -   [Another try with higher "K"](#another-try-with-higher-k)
+    -   [Another try with higher “K”](#another-try-with-higher-k)
 
 Categorical Spatial Interpolation with R {#categorical-spatial-interpolation-with-r}
 ========================================
@@ -24,8 +24,8 @@ with 4 CPU cores. So, ideally, you also learn something about that.
 
 That map shows regional variations of certain dialects of a German word.
 I used this technique when producing around 80 maps for my book project
-["Grüezi, Moin,
-Servus!"](https://www.amazon.de/Gr%C3%BCezi-Moin-Servus-Wie-sprechen/dp/3499633302/ref=sr_1_1?ie=UTF8&qid=1521194080&sr=8-1&keywords=gr%C3%BCezi+moin+servus)
+[“Grüezi, Moin,
+Servus!”](https://www.amazon.de/Gr%C3%BCezi-Moin-Servus-Wie-sprechen/dp/3499633302/ref=sr_1_1?ie=UTF8&qid=1521194080&sr=8-1&keywords=gr%C3%BCezi+moin+servus)
 which was published last December. The georeferenced points underlying
 the interpolation are actually the result of a crowdsourcing project.
 Each point is the location of a person who selected a certain
@@ -34,15 +34,15 @@ here](https://timogrossenbacher.ch/2017/03/heres-how-670000-people-speak-german/
 
 <img src="https://timogrossenbacher.ch/wp-content/uploads/2018/03/gruezi-moin-servus.png" />
 
-Here's a more detailed, final map from that project, showing different
-dialects of "breakfast":
+Here’s a more detailed, final map from that project, showing different
+dialects of “breakfast”:
 
 <img src="https://timogrossenbacher.ch/wp-content/uploads/2018/03/gruezi-moin-servus-map.jpeg" />
 
 I actually tried to automate everything for that large-scale map
-production, but one thing I couldn't automate: The placement of the
-(curved) labels for the dialects (I didn't use a legend in the final
-maps as you can see above). I did that in Adobe Illustrator. I can't
+production, but one thing I couldn’t automate: The placement of the
+(curved) labels for the dialects (I didn’t use a legend in the final
+maps as you can see above). I did that in Adobe Illustrator. I can’t
 imagine a way how this would automatically work for all possible edge
 cases (for example when the label has to be put outside of the map
 because the area is too small).
@@ -58,7 +58,7 @@ This tutorial is structured as follows:
 -   Preprocess the data (simplify geometries, convert CSV point data
     into an `sf` object, reproject the geodata into the ETRS CRS, clip
     the point data to Germany, so data outside of Germany is discarded).
--   Then, a regular grid without "data" is created. Each cell in this
+-   Then, a regular grid without “data” is created. Each cell in this
     grid will later be interpolated from the point data.
 -   Run the spatial interpolation with the `kknn` package. Since this is
     quite computationally and memory intensive, the grid is split up
@@ -112,7 +112,7 @@ For this project, I just used the usual suspects, i.e. `tidyverse`
 packages, the new and shiny `sf` for geodata processing, `rnaturalearth`
 for downloading political boundaries of Germany, `foreach` and
 `doParallel` for parallel processing and `kknn` for categorical
-k-nearest-neighbor interpolation. That's it, that's all.
+k-nearest-neighbor interpolation. That’s it, that’s all.
 
 ``` r
 # from https://mran.revolutionanalytics.com/web/packages/checkpoint/vignettes/using-checkpoint-with-knitr.html
@@ -127,7 +127,8 @@ library(sf) # spatial data handling
 library(rnaturalearth) # country borders geometries from naturalearth.org
 library(foreach) # parallel computing
 library(doParallel) # parallel computing
-library(kknn) # categorical knn",
+library(kknn) # categorical knn
+library(rmarkdown) # knitting",
 file = "manifest.R")
 ```
 
@@ -149,25 +150,6 @@ if (!require(checkpoint)) {
                            repos = "http://cran.us.r-project.org")
   require(checkpoint)
 }
-```
-
-    ##   
-       checking for file ‘/tmp/RtmpN3xaX1/remotesfb375c21760/RevolutionAnalytics-checkpoint-024b91d/DESCRIPTION’ ...
-      
-    ✔  checking for file ‘/tmp/RtmpN3xaX1/remotesfb375c21760/RevolutionAnalytics-checkpoint-024b91d/DESCRIPTION’
-    ## ─  preparing ‘checkpoint’:
-    ## ✔  checking DESCRIPTION meta-information
-    ## 
-      
-    ─  checking for LF line-endings in source and make files and shell scripts
-    ## ─  checking for empty or unneeded directories
-    ## ─  building ‘checkpoint_0.4.0.tar.gz’
-    ## 
-      
-       
-    ## 
-
-``` r
 # nolint start
 if (!dir.exists("~/.checkpoint")) {
   dir.create("~/.checkpoint")
@@ -193,11 +175,11 @@ sessionInfo()
 
     ## R version 3.4.4 (2018-03-15)
     ## Platform: x86_64-pc-linux-gnu (64-bit)
-    ## Running under: Ubuntu 18.04.1 LTS
+    ## Running under: Ubuntu 18.04.2 LTS
     ## 
     ## Matrix products: default
-    ## BLAS: /opt/R/R-3.4.4/lib64/R/lib/libRblas.so
-    ## LAPACK: /opt/R/R-3.4.4/lib64/R/lib/libRlapack.so
+    ## BLAS: /opt/R/R-3.4.4/lib/R/lib/libRblas.so
+    ## LAPACK: /opt/R/R-3.4.4/lib/R/lib/libRlapack.so
     ## 
     ## locale:
     ##  [1] LC_CTYPE=en_US.UTF-8       LC_NUMERIC=C              
@@ -212,38 +194,27 @@ sessionInfo()
     ## [8] base     
     ## 
     ## other attached packages:
-    ##  [1] kknn_1.3.1          doParallel_1.0.10   iterators_1.0.8    
-    ##  [4] foreach_1.4.3       rnaturalearth_0.1.0 sf_0.5-4           
-    ##  [7] lintr_1.0.1         forcats_0.2.0       magrittr_1.5       
-    ## [10] dplyr_0.7.2         purrr_0.2.3         readr_1.1.1        
-    ## [13] tidyr_0.7.0         tibble_1.3.4        ggplot2_2.2.1      
-    ## [16] tidyverse_1.1.1     checkpoint_0.4.0    usethis_1.5.0      
-    ## [19] devtools_2.0.2     
+    ##  [1] rmarkdown_1.6       kknn_1.3.1          doParallel_1.0.10  
+    ##  [4] iterators_1.0.8     foreach_1.4.3       rnaturalearth_0.1.0
+    ##  [7] sf_0.5-4            lintr_1.0.1         forcats_0.2.0      
+    ## [10] magrittr_1.5        dplyr_0.7.2         purrr_0.2.3        
+    ## [13] readr_1.1.1         tidyr_0.7.0         tibble_1.3.4       
+    ## [16] ggplot2_2.2.1       tidyverse_1.1.1     checkpoint_0.4.0   
     ## 
     ## loaded via a namespace (and not attached):
-    ##  [1] httr_1.3.1        pkgload_1.0.2     jsonlite_1.5     
-    ##  [4] modelr_0.1.1      assertthat_0.2.0  sp_1.2-5         
-    ##  [7] cellranger_1.1.0  yaml_2.1.14       remotes_2.0.4    
-    ## [10] sessioninfo_1.1.1 backports_1.1.0   lattice_0.20-35  
-    ## [13] glue_1.3.1        digest_0.6.12     rvest_0.3.2      
-    ## [16] colorspace_1.3-2  Matrix_1.2-12     htmltools_0.3.6  
-    ## [19] plyr_1.8.4        psych_1.7.5       pkgconfig_2.0.1  
-    ## [22] broom_0.4.2       haven_1.1.0       scales_0.5.0     
-    ## [25] processx_3.3.0    withr_2.1.2       lazyeval_0.2.0   
-    ## [28] cli_1.1.0         mnormt_1.5-5      crayon_1.3.4     
-    ## [31] readxl_1.0.0      memoise_1.1.0     evaluate_0.10.1  
-    ## [34] ps_1.3.0          fs_1.2.7          nlme_3.1-131.1   
-    ## [37] xml2_1.1.1        foreign_0.8-69    pkgbuild_1.0.3   
-    ## [40] tools_3.4.4       prettyunits_1.0.2 hms_0.3          
-    ## [43] stringr_1.2.0     munsell_0.4.3     bindrcpp_0.2     
-    ## [46] callr_3.2.0       rex_1.1.1         compiler_3.4.4   
-    ## [49] rlang_0.1.2       units_0.4-6       grid_3.4.4       
-    ## [52] igraph_1.1.2      testthat_1.0.2    gtable_0.2.0     
-    ## [55] codetools_0.2-15  DBI_0.7           curl_2.8.1       
-    ## [58] reshape2_1.4.2    R6_2.2.2          lubridate_1.6.0  
-    ## [61] knitr_1.17        udunits2_0.13     bindr_0.1        
-    ## [64] rprojroot_1.2     desc_1.2.0        stringi_1.1.5    
-    ## [67] Rcpp_0.12.12
+    ##  [1] reshape2_1.4.2   haven_1.1.0      lattice_0.20-35  colorspace_1.3-2
+    ##  [5] htmltools_0.3.6  yaml_2.1.14      rlang_0.1.2      foreign_0.8-69  
+    ##  [9] glue_1.3.1       DBI_0.7          sp_1.2-5         modelr_0.1.1    
+    ## [13] readxl_1.0.0     bindrcpp_0.2     bindr_0.1        plyr_1.8.4      
+    ## [17] stringr_1.2.0    munsell_0.4.3    gtable_0.2.0     cellranger_1.1.0
+    ## [21] rvest_0.3.2      codetools_0.2-15 psych_1.7.5      evaluate_0.10.1 
+    ## [25] knitr_1.17       rex_1.1.1        broom_0.4.2      Rcpp_0.12.12    
+    ## [29] udunits2_0.13    scales_0.5.0     backports_1.1.0  jsonlite_1.5    
+    ## [33] mnormt_1.5-5     hms_0.3          digest_0.6.12    stringi_1.1.5   
+    ## [37] grid_3.4.4       rprojroot_1.2    tools_3.4.4      lazyeval_0.2.0  
+    ## [41] pkgconfig_2.0.1  Matrix_1.2-12    xml2_1.1.1       lubridate_1.6.0 
+    ## [45] assertthat_0.2.0 httr_1.3.1       R6_2.2.2         igraph_1.1.2    
+    ## [49] units_0.4-6      nlme_3.1-131.1   compiler_3.4.4
 
 Load Data {#load-data}
 ---------
@@ -254,7 +225,7 @@ Political boundaries of Germany can be directly downloaded from
 naturalearth.com with the `rnaturalearth` package.
 
 Here I load the admin\_1 boundaries of the whole world, from which
-German states ("Bundesländer" like "Berlin-Brandenburg") are filtered.
+German states (“Bundesländer” like “Berlin-Brandenburg”) are filtered.
 
 I am going to dissolve them further below.
 
@@ -323,21 +294,22 @@ point_data %<>%
 point_data %>% head()
 ```
 
-|       lat|        lng| pronunciation\_id |
-|---------:|----------:|:------------------|
-|  50.81461|   6.242981| quatschen         |
-|  50.62507|   7.119141| quatschen         |
-|  50.12058|   8.789062| babbeln           |
-|  51.19312|  14.677734| quatschen         |
-|  48.87917|   9.338379| tratschen         |
-|  51.04139|  14.523926| quatschen         |
+    ## # A tibble: 6 x 3
+    ##        lat       lng pronunciation_id
+    ##      <dbl>     <dbl>           <fctr>
+    ## 1 50.81461  6.242981        quatschen
+    ## 2 50.62507  7.119141        quatschen
+    ## 3 50.12058  8.789062          babbeln
+    ## 4 51.19312 14.677734        quatschen
+    ## 5 48.87917  9.338379        tratschen
+    ## 6 51.04139 14.523926        quatschen
 
 ### Cities {#cities}
 
 I also labelled some big German cities in the map to provide some
 orientation. These are available from simplemaps.com (there are
 certainly other data sets, this is just what a quick DuckDuckGo search
-revealed...).
+revealed…).
 
 ``` r
 # load cities from Simple Maps
@@ -373,8 +345,8 @@ First of all, I dissolve all German states into the country boundaries.
 This can be elegantly achieved using `dplyr` syntax, namely `group_by`
 and `summarize` without arguments.
 
-I also don't need highly granular geometries because the map is going to
-be plotted rather small-scale. So I use `sf`'s `st_simplify` to apply a
+I also don’t need highly granular geometries because the map is going to
+be plotted rather small-scale. So I use `sf`’s `st_simplify` to apply a
 simplification algorithm.
 
 ``` r
@@ -443,7 +415,7 @@ region, including countries like Switzerland, and I only want to have
 points for Germany, I clip them using old-school subsetting.
 
 Before that though, I have to draw a 10km buffer around Germany, because
-I want to include also some points outside of Germany. If I didn't do
+I want to include also some points outside of Germany. If I didn’t do
 that, the interpolation close to the German border would look weird.
 
 ``` r
@@ -456,7 +428,7 @@ point_data <- point_data[germany_buffered, ]
 
 Now it starts to get interesting. The goal of this whole exercise is
 *interpolating a discrete geometric point data set to a continuous
-surface*, represented by a regular grid (a "raster" in geoscience
+surface*, represented by a regular grid (a “raster” in geoscience
 terms).
 
 For that, I create a regular grid with `st_make_grid` from the `sf`
@@ -469,7 +441,7 @@ I know how many pixels (= grid cells) in the x-dimension there should
 be: 300. A higher number results in an almost quadratically increasing
 computing time. A lower number takes faster to compute, but yields a
 less continuous, more pixelated surface. Try out different values here
-and look at the end result if you don't know what I mean :-)
+and look at the end result if you don’t know what I mean :-)
 
 From that number, the height of the grid in pixels is computed (because
 that depends on the aspect ratio of Germany).
@@ -500,18 +472,18 @@ plot(grid)
 
 <img src="https://timogrossenbacher.ch/wp-content/uploads/2018/03/csi-make_grid-1.png" width="100%" />
 
-Well, that grid doesn't look too spectacular. If you zoomed in though,
+Well, that grid doesn’t look too spectacular. If you zoomed in though,
 you would see the single grid cells, or rather: points. Why that? I
-didn't actually create a "raster" as one would do with the `raster`
+didn’t actually create a “raster” as one would do with the `raster`
 package. `sf` returns an `sfc` object with center points of the grid
-cells. A "traditional" raster is not needed because
+cells. A “traditional” raster is not needed because
 `ggplot2::geom_raster` just needs a data frame with grid cell positions
 and draws a continuous surface from it, not a collection of discrete
 points like `geom_point`. But more about that later.
 
 ### Prepare Training Set {#prepare-training-set}
 
-The "training set" is basically the point data set with the single
+The “training set” is basically the point data set with the single
 dialects. This stems from statistical learning terminology, as I
 actually use a method from that area, the so-called k-nearest-neighbor
 interpolation (which can also be used for predictive analytics, for
@@ -524,7 +496,7 @@ without any geographical meaning.
 I also use some `dplyr` magic to only retain the 8 most prominent
 dialects in the 150k point data set. Why? Because plotting more than 8
 different colors in the final map is a pain for the eyes – the different
-areas couldn't be distinguished anymore. But bear in mind: The more we
+areas couldn’t be distinguished anymore. But bear in mind: The more we
 summarize the data set, the more local specialities we lose (endemic
 dialects that only appear in one city, for instance).
 
@@ -555,22 +527,22 @@ package to interpolate from the training set (point data,
 just created regular grid. The function `kknn` takes these two data
 frames and a formula `dialect . ~` which tells it to interpolate the
 `dialect` factor variable according to all other variables, which are
-nothing more than `lng` and `lat`. The cool thing is that these don't
+nothing more than `lng` and `lat`. The cool thing is that these don’t
 have to be geographical at all – but of course, this technique is often
 used for geographical interpolations. The `kknn` function takes `k` as
 the last parameter: it specifies from how many neighboring points (from
 the point data set) a grid cell will be interpolated. I use `k = 1000`
-below, and also tried out other values (there's another example with
+below, and also tried out other values (there’s another example with
 `k = 2000` at the end of this post). The bigger this value, the
-"smoother" the resulting surface will be, the more local details vanish.
-It's hard to say which of these details are just noise or actual local
+“smoother” the resulting surface will be, the more local details vanish.
+It’s hard to say which of these details are just noise or actual local
 language varieties. One could certainly account for this by doing
 something like cross-fold-validation, but since I first and foremost
 wanted to produce very coarse maps for a popular culture book, I kind of
 neglected this part. Furthermore, my co-authors, who are all linguists,
 doublechecked each map for its linguistic plausibility.
 
-What's special about `kknn` is that it can interpolate *categorical*
+What’s special about `kknn` is that it can interpolate *categorical*
 variables like the factor at hand here. Usually with spatial
 interpolation, KNN is used to interpolate continuous variables like
 temperatures from point measurements.
@@ -591,7 +563,7 @@ This works by specifying a function `computeGrid` which is executed in
 parallel with the `foreach` and `doParallel` pattern. That function
 takes a specific section of the `grid` object – specified with regular
 subsetting, e.g. `grid[1:3000]`. In other words: The grid tiles /
-batches don't even need to be rectangular, which I only started to
+batches don’t even need to be rectangular, which I only started to
 realize when I wrote this blog post (before that I used the package
 `SpaDES::splitRaster` to split up a traditional `raster`-grid into
 regular tiles, but for this blog post I wanted to keep the dependencies
@@ -600,7 +572,7 @@ on a minimum).
 On a 4-CPU-core-laptop like mine, the following takes about 5 minutes.
 Calculating ~80 maps with a grid width of 1000 (instead of 300), which I
 had to do for my book, took quite some time, as you can imagine. I
-actually experimented with "outsourcing" this calcualation to a remote
+actually experimented with “outsourcing” this calcualation to a remote
 cluster (for instance provided by Microsoft Azure), but then that was
 quite costly and I decided that for my one-time-use, it would be easier
 to compute it locally.
@@ -650,10 +622,10 @@ computeGrid <- function(grid, dialects_train, knn) {
 
 # specify the number of cores below (adapt if you have fewer cores or
 # want to reserve some computation power to other stuff)
-registerDoParallel(cores = 4)
+registerDoParallel(cores = 8)
 
 # specify number of batches and resulting size of each batch (in grid cells)
-no_batches <- 20
+no_batches <- 60 # increase this number if you run into memory problems
 batch_size <- ceiling(length(grid) / no_batches)
 
 # PARALLEL COMPUTATION
@@ -682,7 +654,7 @@ time.taken <- end.time - start.time
 time.taken
 ```
 
-    ## Time difference of 3.717294 mins
+    ## Time difference of 1.708192 mins
 
 ``` r
 # convert resulting df back to sf object, but do not remove raw geometry cols
@@ -702,7 +674,7 @@ Now I can finally visualize all that beautifully processed data!
 
 ### Define a map theme {#define-a-map-theme}
 
-I first define a theme for the map, e.g. I remove all axes, add a subtle
+I first define a theme for the map, e.g. I remove all axes, add a subtle
 grid etc. I mostly took this from [a previous blog post of
 mine](https://timogrossenbacher.ch/2016/12/beautiful-thematic-maps-with-ggplot2-only/).
 
@@ -750,11 +722,11 @@ theme_map <- function(...) {
 ### Preparations {#preparations-1}
 
 Because the current CRAN version of `ggplot2` can still not work
-directly with `sf` objects (no judgement here, but I'm looking forward
+directly with `sf` objects (no judgement here, but I’m looking forward
 to when that will possible), I first have to convert the boundaries of
 Germany and the cities back to ordinary data frames. For Germany, this
-involves `ggplot2`'s `fortify` function, which turns a polygon geometry
-into a "flat" data frame.
+involves `ggplot2`’s `fortify` function, which turns a polygon geometry
+into a “flat” data frame.
 
 ``` r
 # Germany needs to be fortified in order to be plotted (for that there
@@ -816,7 +788,7 @@ ggplot(data = dialects_sample) +
 Now comes the fun part. Visualizing the interpolated grid is very simple
 with `geom_raster`. Even though `dialects_raster` is still an `sf`
 object, `geom_raster` only works with the attached data frame (= no need
-to transform it like `cities`). That's why I didn't remove the raw
+to transform it like `cities`). That’s why I didn’t remove the raw
 geometry columns before.
 
 `geom_raster` uses the `fill` aesthetic for the dominant dialect at the
@@ -862,14 +834,14 @@ ggplot(data = dialects_raster) +
 <img src="https://timogrossenbacher.ch/wp-content/uploads/2018/03/csi-visualize-interpolation-1.png" width="100%" />
 
 One last thing: You might have noticed that only 7 different dialects
-remain. Depending on the number of K, some dialects can be "overruled"
-by others. So if I'd set K to a very high number like 20'000, probably
-only the globally most dominant dialect "quatschen" would remain.
+remain. Depending on the number of K, some dialects can be “overruled”
+by others. So if I’d set K to a very high number like 20’000, probably
+only the globally most dominant dialect “quatschen” would remain.
 
-Another try with higher "K" {#another-try-with-higher-k}
+Another try with higher “K” {#another-try-with-higher-k}
 ---------------------------
 
-Just to show you the effects of a higher K, here's the same thing as
+Just to show you the effects of a higher K, here’s the same thing as
 above but with `k = 2000`. This should take approximately twice as long
 as the computation with `k = 1000`, because computation time is a linear
 function of the number of neighbors that need to be taken into account
@@ -900,7 +872,7 @@ time.taken <- end.time - start.time
 time.taken
 ```
 
-    ## Time difference of 6.251122 mins
+    ## Time difference of 4.347019 mins
 
 ``` r
 # convert resulting df back to sf object, but do not remove raw geometry cols
@@ -948,6 +920,6 @@ ggplot(data = dialects_raster) +
 
 <img src="https://timogrossenbacher.ch/wp-content/uploads/2018/03/csi-higher-k-1.png" width="100%" />
 
-That's it. If you have questions, write a comment or an email, and as
+That’s it. If you have questions, write a comment or an email, and as
 always, [follow me on Twitter](https://twitter.com/grssnbchr) if you
-still don't.
+still don’t.

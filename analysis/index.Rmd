@@ -47,7 +47,7 @@ project_name <- "categorical-spatial-interpolation" # adapt!
 package_date <- "2017-09-01" # date of the CRAN snapshot that
 # the checkpoint package uses
 R_version <- "3.4.4"
-options(Ncpus = 4) # use 4 cores for parallelized installation of packages
+options(Ncpus = 8) # use 4 cores for parallelized installation of packages
 if (R_version != paste0(version$major, ".", version$minor)){
   stop("ERROR: specified R version does not match currently used.")
 }
@@ -149,7 +149,8 @@ library(sf) # spatial data handling
 library(rnaturalearth) # country borders geometries from naturalearth.org
 library(foreach) # parallel computing
 library(doParallel) # parallel computing
-library(kknn) # categorical knn",
+library(kknn) # categorical knn
+library(rmarkdown) # knitting",
 file = "manifest.R")
 
 ```
@@ -444,10 +445,10 @@ computeGrid <- function(grid, dialects_train, knn) {
 
 # specify the number of cores below (adapt if you have fewer cores or
 # want to reserve some computation power to other stuff)
-registerDoParallel(cores = 4)
+registerDoParallel(cores = 8)
 
 # specify number of batches and resulting size of each batch (in grid cells)
-no_batches <- 20
+no_batches <- 60 # increase this number if you run into memory problems
 batch_size <- ceiling(length(grid) / no_batches)
 
 # PARALLEL COMPUTATION
